@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Edit Medicines</title>
+</head>
+<body>
+  <h1>Edit Medicines</h1>
+  <form id="editMedicinesForm">
+    <label for="medicineTimes">Medicine Times (separated by comma):</label>
+    <input type="text" id="medicineTimes" required><br><br>
+    <label for="medicines">Medicines (separated by comma):</label>
+    <input type="text" id="medicines" required><br><br>
+    <button type="submit">Save</button>
+  </form>
+
+  <script>
+    document.getElementById("editMedicinesForm").addEventListener("submit", async function(event) {
+      event.preventDefault();
+      const medicineTimes = document.getElementById("medicineTimes").value.split(",");
+      const medicines = document.getElementById("medicines").value.split(",");
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        const response = await fetch(`/api/User/${userId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            medicine_times: medicineTimes,
+            medicines: medicines
+          })
+        });
+
+        if (response.ok) {
+          alert("Medicines updated successfully.");
+          window.location.href = `dashboard.html?id=${userId}`; // Redirect to the dashboard page with the user ID
+        } else {
+          const errorData = await response.json();
+          alert(errorData.error);
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Failed to update medicines.");
+      }
+    });
+  </script>
+</body>
+</html>
+

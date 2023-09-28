@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+</head>
+  
+<body>
+  <h1>Welcome to the Dashboard</h1>
+  <p>User: <span id="username"></span></p>
+  <p>Medicine Times: <span id="medicineTimes"></span></p>
+  <p>Medicines: <span id="medicines"></span></p>
+
+  <button onclick="editMedicineTimes()">Edit Medicine Times</button>
+
+  <audio id="alertSound">
+    <source src="alert_sound.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    async function getUser() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id');
+
+        const response = await fetch(`/api/User/${userId}`,  {method: "GET"});
+        if (response.ok) {
+          const userData = await response.json();
+          document.getElementById("username").textContent = userData.name;
+
+          if (userData.medicine_times && userData.medicine_times.length > 0) {
+            document.getElementById("medicineTimes").textContent = userData.medicine_times.join(", ");
+          } else {
+            document.getElementById("medicineTimes").textContent = "No medicine times available";
+          }
+
+          if (userData.medicines && userData.medicines.length > 0) {
+            document.getElementById("medicines").textContent = userData.medicines.join(", ");
+          } else {
+            document.getElementById("medicines").textContent = "No medicines available";
+          }
+        } else {
+          const errorData = await response.json();
+          alert(errorData.error);
+        }
+      } catch (error) {
+        console.log(error);
+        alert("Failed to fetch user data.");
+      }
+    }
+    
+    function editMedicineTimes() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('id');
+      window.location.href = "/edit-medicines?id=" + userId;
+    }
+
+    function playAlertSound() {
+      const alertSound = document.getElementById("alertSound");
+      alertSound.play();
+    }
+
+    function showAlertWithSound() {
+    const alertSound = document.getElementById("alertSound");
+    alertSound.onended = function() {
+    alert('It is time to take your medicine!');
+    };
+    playAlertSound();
+}
+
+    async function checkMedicineTimes() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('id');
+
+    const response = await fetch(`/api/User/${userId}`, { method: 'GET' });
+    if (response.ok) {
+      const userData = await response.json();
+      const medicineTimes = userData.medicine_times;
+
+      if (medicineTimes && medicineTimes.length > 0) {
+        const currentTime = new Date();
+        const currentHour = currentTime.getHours();
+        const currentMinute = currentTime.getMinutes();
+
+        for (const time of medicineTimes) {
+          const [hour, minute] = time.split(':');
+
+          if (
+            parseInt(hour, 10) === currentHour &&
+            parseInt(minute, 10) === currentMinute
+          ) {
+            
+            showAlertWithSound();
+            break;
+          }
+        }
+      }
+    } else {
+      const errorData = await response.json();
+      alert(errorData.error);
+    }
+  } catch (error) {
+    console.log(error);
+    
+    alert('Failed to fetch user data.');
+  }
+}
+
+
+window.onload = function() {
+  getUser();
+  checkMedicineTimes();
+  setInterval(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const userId = urlParams.get('id');
+  checkMedicineTimes(userId);
+}, 30000);
+};
+
+  </script>
+</body>
+</html>
+
